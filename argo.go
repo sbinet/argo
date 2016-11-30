@@ -64,12 +64,9 @@ func New(mode Mode, device string, baud int) (*Bot, error) {
 			})
 			sensor.On(gpio.Data, func(data interface{}) {
 				v := float64(data.(int))
-				if v < 200 { // HACK
-					return
-				}
 				select {
 				case bot.Data <- Data{Time: time.Now(), Data: v}:
-				default: // drop it
+				default: // nobody's listening, drop it
 				}
 			})
 			sensor.On(gpio.Error, func(data interface{}) {

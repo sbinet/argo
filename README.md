@@ -94,6 +94,6 @@ $> argo-web -mode sensor
 2016/11/30 13:00:06 <nil>
 ```
 
-[web-plot (PDF)](https://github.com/sbinet/argo)
+[web-plot (PDF)](https://github.com/sbinet/argo/blob/master/web-plot.pdf)
 
 
