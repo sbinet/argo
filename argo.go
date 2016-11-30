@@ -46,7 +46,7 @@ func New(mode Mode, device string, baud int) (*Bot, error) {
 
 	fa := firmata.NewFirmataAdaptor("arduino", device, conn)
 	led := gpio.NewLedDriver(fa, "led", "13")
-	sensor := gpio.NewAnalogSensorDriver(fa, "sensor", "1", 500*time.Millisecond)
+	sensor := gpio.NewAnalogSensorDriver(fa, "sensor", "1") //, 10*time.Millisecond)
 
 	var work func()
 

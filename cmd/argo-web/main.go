@@ -12,6 +12,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/gonum/plot"
 	"github.com/gonum/plot/plotter"
@@ -57,23 +58,7 @@ func main() {
 		log.Fatal(err)
 	}()
 
-	go func() {
-		var table = make(plotter.XYs, 0, 1024)
-
-		for data := range bot.Data {
-			x := float64(data.Time.UTC().Unix())
-			y := data.Data
-			table = append(table, struct{ X, Y float64 }{})
-			i := len(table) - 1
-			table[i].X = x
-			table[i].Y = y
-			datac <- Data{plotTime(table)}
-			if len(table) == cap(table) {
-				copy(table[:512], table[512:])
-				table = table[:512]
-			}
-		}
-	}()
+	go runDAQ(bot)
 
 	host, port, err := net.SplitHostPort(*addr)
 	if err != nil {
@@ -94,12 +79,7 @@ func plotTime(data plotter.XYs) string {
 		log.Fatalf("error creating time-plot: %v\n", err)
 	}
 
-	// xticks defines how we convert and display time.Time values.
-	xticks := plot.TimeTicks{Format: "2006-01-02\n15:04:05"}
-
-	p.X.Label.Text = "Time"
-	p.X.Tick.Marker = xticks
-	p.Y.Min = 0
+	p.X.Label.Text = "Acquisition Time (s)"
 	p.Y.Label.Text = "Light (A.U.)"
 
 	line, points, err := plotter.NewLinePoints(data)
@@ -143,6 +123,25 @@ func dataHandler(ws *websocket.Conn) {
 		if err != nil {
 			log.Printf("error sending data: %v\n", err)
 			return
+		}
+	}
+}
+
+func runDAQ(bot *argo.Bot) {
+	var table = make(plotter.XYs, 0, 1024)
+	beg := time.Now()
+
+	for data := range bot.Data {
+		x := data.Time.Sub(beg).Seconds()
+		y := data.Data
+		table = append(table, struct{ X, Y float64 }{})
+		i := len(table) - 1
+		table[i].X = x
+		table[i].Y = y
+		datac <- Data{plotTime(table)}
+		if len(table) == cap(table) {
+			copy(table[:512], table[512:])
+			table = table[:512]
 		}
 	}
 }
